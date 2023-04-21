@@ -41,6 +41,8 @@ except ImportError:
 
 from GDLLib import *
 
+
+
 ID = ''
 LISTBOX_SEPARATOR = '--------'
 AC_18   = 28
@@ -301,408 +303,433 @@ class ListboxWithRefresh(tk.Listbox):
 
 
 class GUIApp(tk.Frame):
+
+    import tkinter as tk
     def __init__(self):
         tk.Frame.__init__(self)
         self.top = self.winfo_toplevel()
 
-        self.currentConfig = ConfigParser()
-        self.appDataDir  = os.getenv('APPDATA')
-        if os.path.isfile(self.appDataDir  + r"\TemplateMarker.ini"):
-            self.currentConfig.read(self.appDataDir  + r"\TemplateMarker.ini")
-        else:
-            self.currentConfig.read("TemplateMarker.ini")    #TODO into a different class or stg
+    entry1 = tk.Entry(width=25)
+    entry1.grid(row=0, column=1, padx=10, pady=10)
 
-        self.SourceXMLDirName   = tk.StringVar()
-        self.SourceGDLDirName   = tk.StringVar()
-        self.TargetXMLDirName   = tk.StringVar()
-        self.TargetGDLDirName   = tk.StringVar()
-        self.SourceImageDirName = tk.StringVar()
-        self.TargetImageDirName = tk.StringVar()
-        self.AdditionalImageDir = tk.StringVar()
+    entry2 = tk.Entry(width=25)
+    entry2.grid(row=1, column=1, padx=10, pady=10)
 
-        self.ImgStringFrom      = tk.StringVar()
-        self.ImgStringTo        = tk.StringVar()
+    entry3 = tk.Entry(width=25)
+    entry3.grid(row=2, column=1, padx=10, pady=10)
 
-        self.StringFrom         = tk.StringVar()
-        self.StringTo           = tk.StringVar()
+    button1 = tk.Button(text='Browse')
+    button1.grid(row=0, column=2, padx=10, pady=10)
 
-        self.fileName           = tk.StringVar()
-        self.proDatURL          = tk.StringVar()
-        self.DestItem           = None
+    button2 = tk.Button(text='Browse')
+    button2.grid(row=1, column=2, padx=10, pady=10)
 
-        self.ACLocation         = tk.StringVar()
+    button3 = tk.Button(text='Browse')
+    button3.grid(row=2, column=2, padx=10, pady=10)
 
-        self.bCheckParams       = tk.BooleanVar()
-        self.bDebug             = tk.BooleanVar()
-        self.bCleanup           = tk.BooleanVar()
-        self.bOverWrite         = tk.BooleanVar()
-        self.bAddStr            = tk.BooleanVar()
-        self.doBOUpdate         = tk.BooleanVar()
+    button4 = tk.Button(text='Start!')
+    button4.grid(row=3, column=1, padx=10, pady=10)
 
-        self.bXML               = tk.BooleanVar()
-        self.bGDL               = tk.BooleanVar()
-        self.isSourceGDL        = tk.BooleanVar()
 
-        self.observer  = None
-        self.observer2 = None
 
-        self.warnings = []
-
-        self.bo                 = None
-        self.googleSpreadsheet  = None
-        self.bWriteToSelf       = False             # Whether to write back to the file itself
-
-        global \
-            SourceXMLDirName, SourceGDLDirName, TargetXMLDirName, TargetGDLDirName, SourceImageDirName, TargetImageDirName, \
-            AdditionalImageDir, bDebug, bCleanup, bCheckParams, ACLocation, bGDL, bXML, dest_dict, dest_guids, replacement_dict, id_dict, \
-            pict_dict, source_pict_dict, source_guids, bAddStr, bOverWrite, all_keywords, StringTo, doBOUpdate, bWriteToSelf
-
-        SourceXMLDirName    = self.SourceXMLDirName
-        SourceGDLDirName    = self.SourceGDLDirName
-        TargetXMLDirName    = self.TargetXMLDirName
-        TargetGDLDirName    = self.TargetGDLDirName
-        SourceImageDirName  = self.SourceImageDirName
-        TargetImageDirName  = self.TargetImageDirName
-        AdditionalImageDir  = self.AdditionalImageDir
-        bCheckParams        = self.bCheckParams
-        bDebug              = self.bDebug
-        bCleanup            = self.bCleanup
-        bXML                = self.bXML
-        bGDL                = self.bGDL
-        doBOUpdate          = self.doBOUpdate
-        ACLocation          = self.ACLocation
-        bAddStr             = self.bAddStr
-        bOverWrite          = self.bOverWrite
-        StringTo            = self.StringTo
-        bWriteToSelf        = self.bWriteToSelf
-
-        __tooltipIDPT1 = "Something like E:/_GDL_SVN/_TEMPLATE_/AC18_Opening/library"
-        __tooltipIDPT2 = "Images' dir that are NOT to be renamed per project and compiled into final gdls (prev pics, for example), something like E:\_GDL_SVN\_TEMPLATE_\AC18_Opening\library_images"
-        __tooltipIDPT3 = "Something like E:/_GDL_SVN/_TARGET_PROJECT_NAME_/library"
-        __tooltipIDPT4 = "Final GDL output dir"
-        __tooltipIDPT5 = "If set, copy project specific pictures here, too, for endcoded images. Something like E:/_GDL_SVN/_TARGET_PROJECT_NAME_/library_images"
-        __tooltipIDPT6 = "Additional images' dir, for all other images, which can be used by any projects, something like E:/_GDL_SVN/_IMAGES_GENERIC_"
-        __tooltipIDPT7 = "Source GDL folder name"
-
-        try:
-            for cName, cValue in self.currentConfig.items('ArchiCAD'):
-                try:
-                    if   cName == 'bgdl':               self.bGDL.set(cValue)
-                    elif cName == 'bxml':               self.bXML.set(cValue)
-                    elif cName == 'bdebug':             self.bDebug.set(cValue)
-                    elif cName == 'additionalimagedir': self.AdditionalImageDir.set(cValue)
-                    elif cName == 'aclocation':         self.ACLocation.set(cValue)
-                    elif cName == 'stringto':           self.StringTo.set(cValue)
-                    elif cName == 'stringfrom':         self.StringFrom.set(cValue)
-                    elif cName == 'inputimagesource':   self.SourceImageDirName.set(cValue)
-                    elif cName == 'inputimagetarget':   self.TargetImageDirName.set(cValue)
-                    elif cName == 'imgstringfrom':      self.ImgStringFrom.set(cValue)
-                    elif cName == 'imgstringto':        self.ImgStringTo.set(cValue)
-                    elif cName == 'sourcedirname':      self.SourceXMLDirName.set(cValue)
-                    elif cName == 'xmltargetdirname':   self.TargetXMLDirName.set(cValue)
-                    elif cName == 'gdltargetdirname':   self.TargetGDLDirName.set(cValue)
-                    elif cName == 'baddstr':            self.bAddStr.set(cValue)
-                    elif cName == 'boverwrite':         self.bOverWrite.set(cValue)
-                    elif cName == 'allkeywords':
-                        all_keywords |= set(v.strip() for v in cValue.split(',') if v !='')
-                except NoOptionError:
-                    print("NoOptionError")
-                    continue
-                except NoSectionError:
-                    print("NoSectionError")
-                    continue
-                except ValueError:
-                    print("ValueError")
-                    continue
-        except NoSectionError:
-            print("NoSectionError")
-
-        self.observerXML = self.bXML.trace_variable("w", self.targetXMLModified)
-        self.observerGDL = self.bGDL.trace_variable("w", self.targetGDLModified)
-
-        self.warnings = []
-
-        # GUI itself----------------------------------------------------------------------------------------------------
-
-        # ----input side--------------------------------
-
-        self.top.columnconfigure(0, weight=1)
-        self.top.columnconfigure(2, weight=1)
-        self.top.rowconfigure(0, weight=1)
-
-        self.inputFrame = tk.Frame(self.top)
-        self.inputFrame.grid({"row": 0, "column": 0, "sticky": tk.NW + tk.SE})
-        self.inputFrame.columnconfigure(0, weight=1)
-        self.inputFrame.grid_rowconfigure(2, weight=1)
-        self.inputFrame.grid_rowconfigure(4, weight=1)
-
-        self.InputFrameS = [tk.Frame(self.inputFrame) for _ in range (6)]
-        for f, r, cc in zip(self.InputFrameS, list(range(6)), [0, 1, 1, 0, 0, 1, ]):
-            f.grid({"row": r, "column": 0, "sticky": tk.N + tk.S + tk.E + tk.W, })
-            self.InputFrameS[r].grid_columnconfigure(cc, weight=1)
-            self.InputFrameS[r].rowconfigure(0, weight=1)
-
-        iF = 0
-
-        self.entryTextNameFrom = tk.Entry(self.InputFrameS[iF], {"width": 20, "textvariable": self.StringFrom, })
-        self.entryTextNameFrom.grid({"column": 0, "sticky": tk.SE + tk.NW, })
-
-        iF += 1
-
-        self.inputXMLDir = InputDirPlusRadio(self.InputFrameS[iF], "XML Source folder", self.SourceXMLDirName, self.isSourceGDL, False, __tooltipIDPT1)
-
-        iF += 1
-
-        InputDirPlusRadio(self.InputFrameS[iF], "GDL Source folder", self.SourceGDLDirName, self.isSourceGDL, True, __tooltipIDPT7)
-
-        iF += 1
-
-        self.listBox = ListboxWithRefresh(self.InputFrameS[iF], {"target": self.SourceXMLDirName, "imgTarget": self.SourceImageDirName, "dict": replacement_dict})
-        self.listBox.grid({"row": 0, "column": 0, "sticky": tk.E + tk.W + tk.N + tk.S})
-        self.observerLB1 = self.SourceXMLDirName.trace_variable("w", self.listBox.refresh)
-        self.observerLB2 = self.SourceGDLDirName.trace_variable("w", self.processGDLDir)
-
-        self.ListBoxScrollbar = tk.Scrollbar(self.InputFrameS[iF])
-        self.ListBoxScrollbar.grid(row=0, column=1, sticky=tk.E + tk.N + tk.S)
-
-        self.listBox.config(yscrollcommand=self.ListBoxScrollbar.set)
-        self.ListBoxScrollbar.config(command=self.listBox.yview)
-
-        iF += 1
-
-        self.listBox2 = ListboxWithRefresh(self.InputFrameS[iF], {"target": self.SourceXMLDirName, "dict": source_pict_dict})
-        self.listBox2.grid({"row": 0, "column": 0, "sticky": tk.NE + tk.SW})
-        self.observerLB2 = self.SourceXMLDirName.trace_variable("w", self.listBox2.refresh)
-
-        if SourceXMLDirName:
-            self.listBox.refresh()
-            self.listBox2.refresh()
-
-        self.ListBoxScrollbar2 = tk.Scrollbar(self.InputFrameS[iF])
-        self.ListBoxScrollbar2.grid(row=0, column=1, sticky=tk.E + tk.N + tk.S)
-
-        self.listBox2.config(yscrollcommand=self.ListBoxScrollbar2.set)
-        self.ListBoxScrollbar2.config(command=self.listBox2.yview)
-
-        iF += 1
-
-        self.sourceImageDir = InputDirPlusText(self.InputFrameS[iF], "Images' source folder", self.SourceImageDirName, __tooltipIDPT2)
-        if SourceXMLDirName:
-            self.listBox.refresh()
-            self.listBox2.refresh()
-
-        # ----output side--------------------------------
-
-        self.outputFrame = tk.Frame(self.top)
-        self.outputFrame.grid({"row": 0, "column": 2, "sticky": tk.NE + tk.SW})
-        self.outputFrame.columnconfigure(0, weight=1)
-        self.outputFrame.grid_rowconfigure(2, weight=1)
-        self.outputFrame.grid_rowconfigure(4, weight=1)
-
-        self.outputFrameS = [tk.Frame(self.outputFrame) for _ in range (6)]
-        for f, r, cc in zip(self.outputFrameS, list(range(6)), [0, 1, 1, 0, 0, 1]):
-            f.grid({"row": r, "column": 0, "sticky": tk.SW + tk.NE, })
-            self.outputFrameS[r].grid_columnconfigure(cc, weight=1)
-            self.outputFrameS[r].rowconfigure(0, weight=1)
-
-        iF = 0
-
-        self.entryTextNameTo = tk.Entry(self.outputFrameS[iF], {"width": 20, "textvariable": self.StringTo, })
-        self.entryTextNameTo.grid({"row":0, "column": 0, "sticky": tk.SE + tk.NW, })
-
-        iF += 1
-
-        self.XMLDir = InputDirPlusBool(self.outputFrameS[iF], "XML Destination folder",      self.TargetXMLDirName, self.bXML, __tooltipIDPT3)
-
-        iF += 1
-
-        self.GDLDir = InputDirPlusBool(self.outputFrameS[iF], "GDL Destination folder",      self.TargetGDLDirName, self.bGDL, __tooltipIDPT4)
-
-        iF += 1
-
-        self.listBox3 = ListboxWithRefresh(self.outputFrameS[iF], {'dict': dest_dict})
-        self.listBox3.grid({"row": 0, "column": 0, "sticky": tk.SE + tk.NW})
-
-        self.ListBoxScrollbar3 = tk.Scrollbar(self.outputFrameS[iF])
-        self.ListBoxScrollbar3.grid(row=0, column=1, sticky=tk.E + tk.N + tk.S)
-
-        self.listBox3.config(yscrollcommand=self.ListBoxScrollbar3.set)
-        self.ListBoxScrollbar3.config(command=self.listBox3.yview)
-
-        self.listBox3.bind("<<ListboxSelect>>", self.listboxselect)
-
-        iF += 1
-
-        self.listBox4 = ListboxWithRefresh(self.outputFrameS[iF], {'dict': pict_dict})
-        self.listBox4.grid({"row": 0, "column": 0, "sticky": tk.SE + tk.NW})
-
-        self.ListBoxScrollbar4 = tk.Scrollbar(self.outputFrameS[iF])
-        self.ListBoxScrollbar4.grid(row=0, column=1, sticky=tk.E + tk.N + tk.S)
-
-        self.listBox4.config(yscrollcommand=self.ListBoxScrollbar4.set)
-        self.ListBoxScrollbar4.config(command=self.listBox4.yview)
-        self.listBox4.bind("<<ListboxSelect>>", self.listboxImageSelect)
-
-        iF += 1
-
-        InputDirPlusText(self.outputFrameS[iF], "Images' destination folder",  self.TargetImageDirName, __tooltipIDPT5)
-
-        # ------------------------------------
-        # bottom row for project general settings
-        # ------------------------------------
-
-        iF = 0
-
-        self.bottomFrame        = tk.Frame(self.top, )
-        self.bottomFrame.grid({"row":1, "column": 0, "columnspan": 7, "sticky":  tk.S + tk.N, })
-
-        self.buttonACLoc = tk.Button(self.bottomFrame, {"text": "ArchiCAD location", "command": self.setACLoc, })
-        self.buttonACLoc.grid({"row": 0, "column": iF, }); iF += 1
-
-        self.ACLocEntry                 = tk.Entry(self.bottomFrame, {"width": 40, "textvariable": self.ACLocation, })
-        self.ACLocEntry.grid({"row": 0, "column": iF}); iF += 1
-
-        self.buttonAID = tk.Button(self.bottomFrame, {"text": "Additional images' folder", "command": self.setAdditionalImageDir, })
-        self.buttonAID.grid({"row": 0, "column": iF, }); iF += 1
-
-        self.AdditionalImageDirEntry    = tk.Entry(self.bottomFrame, {"width": 40, "textvariable": self.AdditionalImageDir, })
-        self.AdditionalImageDirEntry.grid({"row": 0, "column": iF}); iF += 1
-
-        self.paramCheckButton   = tk.Checkbutton(self.bottomFrame, {"text": "Check Parameters", "variable": self.bCheckParams})
-        self.paramCheckButton.grid({"row": 0, "column": iF}); iF += 1
-
-        self.debugCheckButton   = tk.Checkbutton(self.bottomFrame, {"text": "Debug", "variable": self.bDebug})
-        self.debugCheckButton.grid({"row": 0, "column": iF}); iF += 1
-
-        self.cleanupCheckButton   = tk.Checkbutton(self.bottomFrame, {"text": "Cleanup", "variable": self.bCleanup})
-        self.cleanupCheckButton.grid({"row": 0, "column": iF}); iF += 1
-
-        self.bAddStrCheckButton = tk.Checkbutton(self.bottomFrame, {"text": "Always add strings", "variable": self.bAddStr})
-        self.bAddStrCheckButton.grid({"row": 0, "column": iF}); iF += 1
-
-        self.OverWriteCheckButton   = tk.Checkbutton(self.bottomFrame, {"text": "Overwrite", "variable": self.bOverWrite})
-        self.OverWriteCheckButton.grid({"row": 0, "column": iF}); iF += 1
-
-        self.BOUpdateCheckButton    = tk.Checkbutton(self.bottomFrame, {"text": "BO_update", "variable": self.doBOUpdate})
-        self.OverWriteCheckButton.grid({"row": 0, "column": iF}); iF += 1
-
-        self.startButton        = tk.Button(self.bottomFrame, {"text": "Start", "command": self.start})
-        self.startButton.grid({"row": 0, "column": 7, "sticky": tk.E})
-
-        # ----buttons---------------------------------------------------------------------------------------------------
-
-        self.buttonFrame        = tk.Frame(self.top)
-        self.buttonFrame.grid({"row": 0, "column": 1})
-
-        _i = 0
-
-        self.addAllButton       = tk.Button(self.buttonFrame, {"text": ">>", "command": self.addAllFiles})
-        self.addAllButton.grid({"row":_i, "column": 0})
-
-        _i += 1
-
-        self.addRecursiveButton = tk.Button(self.buttonFrame, {"text": "Recursive >", "command": self.addMoreFilesRecursively})
-        self.addRecursiveButton.grid({"row":_i, "column": 0, "sticky": tk.W + tk.E})
-        CreateToolTip(self.addRecursiveButton, "Add macro, and all its called macro and subtypes recursively, if not added already")
-
-        _i += 1
-
-        self.addButton          = tk.Button(self.buttonFrame, {"text": ">", "command": self.addMoreFiles})
-        self.addButton.grid({"row":_i, "column": 0, "sticky": tk.W + tk.E})
-
-        _i += 1
-
-        self.delButton          = tk.Button(self.buttonFrame, {"text": "X", "command": self.delFile})
-        self.delButton.grid({"row":_i, "column": 0, "sticky": tk.W + tk.E})
-
-        _i += 1
-
-        self.resetButton         = tk.Button(self.buttonFrame, {"text": "Reset", "command": self.resetAll })
-        self.resetButton.grid({"row": _i, "sticky": tk.W + tk.E})
-
-        _i += 1
-
-        self.CSVbutton          = tk.Button(self.buttonFrame, {"text": "CSV", "command": self.getFromCSV, })
-        self.CSVbutton.grid({"row": _i, "sticky": tk.W + tk.E})
-
-        _i += 1
-
-        # self.GoogleSSBbutton     = tk.Button(self.buttonFrame, {"text": "Google Spreadsheet", "command": self.showGoogleSpreadsheetEntry, })
-        # self.GoogleSSBbutton.grid({"row": _i, "sticky": tk.W + tk.E})
-
-        _i += 1
-
-        self.ParamWriteButton    = tk.Button(self.buttonFrame, {"text": "Write params", "command": self.paramWrite, })
-        self.ParamWriteButton.grid({"row": _i, "sticky": tk.W + tk.E})
-
-        #FIXME
+        # self.currentConfig = ConfigParser()
+        # self.appDataDir  = os.getenv('APPDATA')
+        # if os.path.isfile(self.appDataDir  + r"\TemplateMarker.ini"):
+        #     self.currentConfig.read(self.appDataDir  + r"\TemplateMarker.ini")
+        # else:
+        #     self.currentConfig.read("TemplateMarker.ini")    #TODO into a different class or stg
         #
-        #_i += 1
+        # self.SourceXMLDirName   = tk.StringVar()
+        # self.SourceGDLDirName   = tk.StringVar()
+        # self.TargetXMLDirName   = tk.StringVar()
+        # self.TargetGDLDirName   = tk.StringVar()
+        # self.SourceImageDirName = tk.StringVar()
+        # self.TargetImageDirName = tk.StringVar()
+        # self.AdditionalImageDir = tk.StringVar()
         #
-        # self.reconnectButton      = tk.Button(self.buttonFrame, {"text": "Reconnect", "command": self.reconnect })
-        # self.reconnectButton.grid({"row": _i, "sticky": tk.W + tk.E})
-
-        # ----properties------------------------------------------------------------------------------------------------
-
-        self.propertyFrame      = tk.Frame(self.top)
-        self.propertyFrame.grid({"row": 0, "column": 3, "rowspan": 3, "sticky": tk.N})
-
-        iNameW      = 10
-        iCurRow     = 0
-
-        tk.Label(self.propertyFrame, {"width": iNameW, "text": "Name"}).grid({"row": iCurRow, "column": 0})
-        self.fileNameEntry      = tk.Entry(self.propertyFrame, {"width": 60, "textvariable": self.fileName})
-        self.fileNameEntry.grid({"row": iCurRow, "column": 1})
-
-        iCurRow += 1
-
-        tk.Label(self.propertyFrame, {"width": iNameW, "text": "GUID"}).grid({"row": iCurRow, "column": 0})
-        self.guidEntry          = tk.Entry(self.propertyFrame, {"state": tk.DISABLED, })
-        self.guidEntry.grid({"row": iCurRow, "column": 1, "sticky": tk.W + tk.E, })
-
-        iCurRow += 1
-
-        tk.Label(self.propertyFrame, {"width": iNameW, "text": "Version"}).grid({"row": iCurRow, "column": 0})
-        self.versionEntry       = tk.Entry(self.propertyFrame, {"width": 3, "state": tk.DISABLED})
-        self.versionEntry.grid({"row": iCurRow, "column": 1, })
-
-        iCurRow += 1
-
-        tk.Label(self.propertyFrame, {"width": iNameW, "text": "prodatURL"}).grid({"row": iCurRow, "column": 0})
-        self.proDatURLEntry     = tk.Entry(self.propertyFrame, {"textvariable": self.proDatURL})
-        self.proDatURLEntry.grid({"row": iCurRow, "column": 1, "sticky": tk.W + tk.E, })
-
-        iCurRow += 1
-
-        tk.Label(self.propertyFrame, {"width": iNameW, "text": "Author"}).grid({"row": iCurRow, "column": 0})
-        self.authorEntry = tk.Entry(self.propertyFrame, {})
-        self.authorEntry.grid({"row": iCurRow, "column": 1, "sticky": tk.W + tk.E, })
-
-        iCurRow += 1
-
-        tk.Label(self.propertyFrame, {"width": iNameW, "text": "License"}).grid({"row": iCurRow, "column": 0})
-        self.licenseFrame      = tk.Frame(self.propertyFrame)
-        self.licenseFrame.grid({"row": iCurRow, "column": 1, })
-
-        self.licenseEntry = tk.Entry(self.licenseFrame, {"width": 17, })
-        self.licenseEntry.grid({"column": 0, "row": 0, })
-
-        tk.Label(self.licenseFrame, {"width": 4, "text": "Ver."}).grid({"row": 0, "column": 1})
-        self.licenseVersionEntry = tk.Entry(self.licenseFrame, {"width": 17, })
-        self.licenseVersionEntry.grid({"column": 2, "row": 0, })
-
-        iCurRow += 1
-
-        tk.Label(self.propertyFrame, {"text": "Warnings:"}).grid({"row": iCurRow, "column": 0, "sticky": tk.N})
-        self.warningFrame      = tk.Frame(self.propertyFrame)
-        self.warningFrame.grid({"row": iCurRow, "column": 1, "sticky": tk.W})
-
-        #FIXME to put in projectname field
-
-        CreateToolTip(self.entryTextNameFrom, "FromSting: WARNING: this is Regex")
-        CreateToolTip(self.entryTextNameTo, "If 'Always add strings' is set add to the end of every file if FromSting cannot be replaced, if not, only replace FromSting Regex pattern")
-        CreateToolTip(self.AdditionalImageDirEntry, __tooltipIDPT6)
-        CreateToolTip(self.AdditionalImageDirEntry, __tooltipIDPT6)
+        # self.ImgStringFrom      = tk.StringVar()
+        # self.ImgStringTo        = tk.StringVar()
+        #
+        # self.StringFrom         = tk.StringVar()
+        # self.StringTo           = tk.StringVar()
+        #
+        # self.fileName           = tk.StringVar()
+        # self.proDatURL          = tk.StringVar()
+        # self.DestItem           = None
+        #
+        # self.ACLocation         = tk.StringVar()
+        #
+        # self.bCheckParams       = tk.BooleanVar()
+        # self.bDebug             = tk.BooleanVar()
+        # self.bCleanup           = tk.BooleanVar()
+        # self.bOverWrite         = tk.BooleanVar()
+        # self.bAddStr            = tk.BooleanVar()
+        # self.doBOUpdate         = tk.BooleanVar()
+        #
+        # self.bXML               = tk.BooleanVar()
+        # self.bGDL               = tk.BooleanVar()
+        # self.isSourceGDL        = tk.BooleanVar()
+        #
+        # self.observer  = None
+        # self.observer2 = None
+        #
+        # self.warnings = []
+        #
+        # self.bo                 = None
+        # self.googleSpreadsheet  = None
+        # self.bWriteToSelf       = False             # Whether to write back to the file itself
+        #
+        # global \
+        #     SourceXMLDirName, SourceGDLDirName, TargetXMLDirName, TargetGDLDirName, SourceImageDirName, TargetImageDirName, \
+        #     AdditionalImageDir, bDebug, bCleanup, bCheckParams, ACLocation, bGDL, bXML, dest_dict, dest_guids, replacement_dict, id_dict, \
+        #     pict_dict, source_pict_dict, source_guids, bAddStr, bOverWrite, all_keywords, StringTo, doBOUpdate, bWriteToSelf
+        #
+        # SourceXMLDirName    = self.SourceXMLDirName
+        # SourceGDLDirName    = self.SourceGDLDirName
+        # TargetXMLDirName    = self.TargetXMLDirName
+        # TargetGDLDirName    = self.TargetGDLDirName
+        # SourceImageDirName  = self.SourceImageDirName
+        # TargetImageDirName  = self.TargetImageDirName
+        # AdditionalImageDir  = self.AdditionalImageDir
+        # bCheckParams        = self.bCheckParams
+        # bDebug              = self.bDebug
+        # bCleanup            = self.bCleanup
+        # bXML                = self.bXML
+        # bGDL                = self.bGDL
+        # doBOUpdate          = self.doBOUpdate
+        # ACLocation          = self.ACLocation
+        # bAddStr             = self.bAddStr
+        # bOverWrite          = self.bOverWrite
+        # StringTo            = self.StringTo
+        # bWriteToSelf        = self.bWriteToSelf
+        #
+        # __tooltipIDPT1 = "Something like E:/_GDL_SVN/_TEMPLATE_/AC18_Opening/library"
+        # __tooltipIDPT2 = "Images' dir that are NOT to be renamed per project and compiled into final gdls (prev pics, for example), something like E:\_GDL_SVN\_TEMPLATE_\AC18_Opening\library_images"
+        # __tooltipIDPT3 = "Something like E:/_GDL_SVN/_TARGET_PROJECT_NAME_/library"
+        # __tooltipIDPT4 = "Final GDL output dir"
+        # __tooltipIDPT5 = "If set, copy project specific pictures here, too, for endcoded images. Something like E:/_GDL_SVN/_TARGET_PROJECT_NAME_/library_images"
+        # __tooltipIDPT6 = "Additional images' dir, for all other images, which can be used by any projects, something like E:/_GDL_SVN/_IMAGES_GENERIC_"
+        # __tooltipIDPT7 = "Source GDL folder name"
+        #
+        # try:
+        #     for cName, cValue in self.currentConfig.items('ArchiCAD'):
+        #         try:
+        #             if   cName == 'bgdl':               self.bGDL.set(cValue)
+        #             elif cName == 'bxml':               self.bXML.set(cValue)
+        #             elif cName == 'bdebug':             self.bDebug.set(cValue)
+        #             elif cName == 'additionalimagedir': self.AdditionalImageDir.set(cValue)
+        #             elif cName == 'aclocation':         self.ACLocation.set(cValue)
+        #             elif cName == 'stringto':           self.StringTo.set(cValue)
+        #             elif cName == 'stringfrom':         self.StringFrom.set(cValue)
+        #             elif cName == 'inputimagesource':   self.SourceImageDirName.set(cValue)
+        #             elif cName == 'inputimagetarget':   self.TargetImageDirName.set(cValue)
+        #             elif cName == 'imgstringfrom':      self.ImgStringFrom.set(cValue)
+        #             elif cName == 'imgstringto':        self.ImgStringTo.set(cValue)
+        #             elif cName == 'sourcedirname':      self.SourceXMLDirName.set(cValue)
+        #             elif cName == 'xmltargetdirname':   self.TargetXMLDirName.set(cValue)
+        #             elif cName == 'gdltargetdirname':   self.TargetGDLDirName.set(cValue)
+        #             elif cName == 'baddstr':            self.bAddStr.set(cValue)
+        #             elif cName == 'boverwrite':         self.bOverWrite.set(cValue)
+        #             elif cName == 'allkeywords':
+        #                 all_keywords |= set(v.strip() for v in cValue.split(',') if v !='')
+        #         except NoOptionError:
+        #             print("NoOptionError")
+        #             continue
+        #         except NoSectionError:
+        #             print("NoSectionError")
+        #             continue
+        #         except ValueError:
+        #             print("ValueError")
+        #             continue
+        # except NoSectionError:
+        #     print("NoSectionError")
+        #
+        # self.observerXML = self.bXML.trace_variable("w", self.targetXMLModified)
+        # self.observerGDL = self.bGDL.trace_variable("w", self.targetGDLModified)
+        #
+        # self.warnings = []
+        #
+        # # GUI itself----------------------------------------------------------------------------------------------------
+        #
+        # # ----input side--------------------------------
+        #
+        # self.top.columnconfigure(0, weight=1)
+        # self.top.columnconfigure(2, weight=1)
+        # self.top.rowconfigure(0, weight=1)
+        #
+        # self.inputFrame = tk.Frame(self.top)
+        # self.inputFrame.grid({"row": 0, "column": 0, "sticky": tk.NW + tk.SE})
+        # self.inputFrame.columnconfigure(0, weight=1)
+        # self.inputFrame.grid_rowconfigure(2, weight=1)
+        # self.inputFrame.grid_rowconfigure(4, weight=1)
+        #
+        # self.InputFrameS = [tk.Frame(self.inputFrame) for _ in range (6)]
+        # for f, r, cc in zip(self.InputFrameS, list(range(6)), [0, 1, 1, 0, 0, 1, ]):
+        #     f.grid({"row": r, "column": 0, "sticky": tk.N + tk.S + tk.E + tk.W, })
+        #     self.InputFrameS[r].grid_columnconfigure(cc, weight=1)
+        #     self.InputFrameS[r].rowconfigure(0, weight=1)
+        #
+        # iF = 0
+        #
+        # self.entryTextNameFrom = tk.Entry(self.InputFrameS[iF], {"width": 20, "textvariable": self.StringFrom, })
+        # self.entryTextNameFrom.grid({"column": 0, "sticky": tk.SE + tk.NW, })
+        #
+        # iF += 1
+        #
+        # self.inputXMLDir = InputDirPlusRadio(self.InputFrameS[iF], "XML Source folder", self.SourceXMLDirName, self.isSourceGDL, False, __tooltipIDPT1)
+        #
+        # iF += 1
+        #
+        # InputDirPlusRadio(self.InputFrameS[iF], "GDL Source folder", self.SourceGDLDirName, self.isSourceGDL, True, __tooltipIDPT7)
+        #
+        # iF += 1
+        #
+        # self.listBox = ListboxWithRefresh(self.InputFrameS[iF], {"target": self.SourceXMLDirName, "imgTarget": self.SourceImageDirName, "dict": replacement_dict})
+        # self.listBox.grid({"row": 0, "column": 0, "sticky": tk.E + tk.W + tk.N + tk.S})
+        # self.observerLB1 = self.SourceXMLDirName.trace_variable("w", self.listBox.refresh)
+        # self.observerLB2 = self.SourceGDLDirName.trace_variable("w", self.processGDLDir)
+        #
+        # self.ListBoxScrollbar = tk.Scrollbar(self.InputFrameS[iF])
+        # self.ListBoxScrollbar.grid(row=0, column=1, sticky=tk.E + tk.N + tk.S)
+        #
+        # self.listBox.config(yscrollcommand=self.ListBoxScrollbar.set)
+        # self.ListBoxScrollbar.config(command=self.listBox.yview)
+        #
+        # iF += 1
+        #
+        # self.listBox2 = ListboxWithRefresh(self.InputFrameS[iF], {"target": self.SourceXMLDirName, "dict": source_pict_dict})
+        # self.listBox2.grid({"row": 0, "column": 0, "sticky": tk.NE + tk.SW})
+        # self.observerLB2 = self.SourceXMLDirName.trace_variable("w", self.listBox2.refresh)
+        #
+        # if SourceXMLDirName:
+        #     self.listBox.refresh()
+        #     self.listBox2.refresh()
+        #
+        # self.ListBoxScrollbar2 = tk.Scrollbar(self.InputFrameS[iF])
+        # self.ListBoxScrollbar2.grid(row=0, column=1, sticky=tk.E + tk.N + tk.S)
+        #
+        # self.listBox2.config(yscrollcommand=self.ListBoxScrollbar2.set)
+        # self.ListBoxScrollbar2.config(command=self.listBox2.yview)
+        #
+        # iF += 1
+        #
+        # self.sourceImageDir = InputDirPlusText(self.InputFrameS[iF], "Images' source folder", self.SourceImageDirName, __tooltipIDPT2)
+        # if SourceXMLDirName:
+        #     self.listBox.refresh()
+        #     self.listBox2.refresh()
+        #
+        # # ----output side--------------------------------
+        #
+        # self.outputFrame = tk.Frame(self.top)
+        # self.outputFrame.grid({"row": 0, "column": 2, "sticky": tk.NE + tk.SW})
+        # self.outputFrame.columnconfigure(0, weight=1)
+        # self.outputFrame.grid_rowconfigure(2, weight=1)
+        # self.outputFrame.grid_rowconfigure(4, weight=1)
+        #
+        # self.outputFrameS = [tk.Frame(self.outputFrame) for _ in range (6)]
+        # for f, r, cc in zip(self.outputFrameS, list(range(6)), [0, 1, 1, 0, 0, 1]):
+        #     f.grid({"row": r, "column": 0, "sticky": tk.SW + tk.NE, })
+        #     self.outputFrameS[r].grid_columnconfigure(cc, weight=1)
+        #     self.outputFrameS[r].rowconfigure(0, weight=1)
+        #
+        # iF = 0
+        #
+        # self.entryTextNameTo = tk.Entry(self.outputFrameS[iF], {"width": 20, "textvariable": self.StringTo, })
+        # self.entryTextNameTo.grid({"row":0, "column": 0, "sticky": tk.SE + tk.NW, })
+        #
+        # iF += 1
+        #
+        # self.XMLDir = InputDirPlusBool(self.outputFrameS[iF], "XML Destination folder",      self.TargetXMLDirName, self.bXML, __tooltipIDPT3)
+        #
+        # iF += 1
+        #
+        # self.GDLDir = InputDirPlusBool(self.outputFrameS[iF], "GDL Destination folder",      self.TargetGDLDirName, self.bGDL, __tooltipIDPT4)
+        #
+        # iF += 1
+        #
+        # self.listBox3 = ListboxWithRefresh(self.outputFrameS[iF], {'dict': dest_dict})
+        # self.listBox3.grid({"row": 0, "column": 0, "sticky": tk.SE + tk.NW})
+        #
+        # self.ListBoxScrollbar3 = tk.Scrollbar(self.outputFrameS[iF])
+        # self.ListBoxScrollbar3.grid(row=0, column=1, sticky=tk.E + tk.N + tk.S)
+        #
+        # self.listBox3.config(yscrollcommand=self.ListBoxScrollbar3.set)
+        # self.ListBoxScrollbar3.config(command=self.listBox3.yview)
+        #
+        # self.listBox3.bind("<<ListboxSelect>>", self.listboxselect)
+        #
+        # iF += 1
+        #
+        # self.listBox4 = ListboxWithRefresh(self.outputFrameS[iF], {'dict': pict_dict})
+        # self.listBox4.grid({"row": 0, "column": 0, "sticky": tk.SE + tk.NW})
+        #
+        # self.ListBoxScrollbar4 = tk.Scrollbar(self.outputFrameS[iF])
+        # self.ListBoxScrollbar4.grid(row=0, column=1, sticky=tk.E + tk.N + tk.S)
+        #
+        # self.listBox4.config(yscrollcommand=self.ListBoxScrollbar4.set)
+        # self.ListBoxScrollbar4.config(command=self.listBox4.yview)
+        # self.listBox4.bind("<<ListboxSelect>>", self.listboxImageSelect)
+        #
+        # iF += 1
+        #
+        # InputDirPlusText(self.outputFrameS[iF], "Images' destination folder",  self.TargetImageDirName, __tooltipIDPT5)
+        #
+        # # ------------------------------------
+        # # bottom row for project general settings
+        # # ------------------------------------
+        #
+        # iF = 0
+        #
+        # self.bottomFrame        = tk.Frame(self.top, )
+        # self.bottomFrame.grid({"row":1, "column": 0, "columnspan": 7, "sticky":  tk.S + tk.N, })
+        #
+        # self.buttonACLoc = tk.Button(self.bottomFrame, {"text": "ArchiCAD location", "command": self.setACLoc, })
+        # self.buttonACLoc.grid({"row": 0, "column": iF, }); iF += 1
+        #
+        # self.ACLocEntry                 = tk.Entry(self.bottomFrame, {"width": 40, "textvariable": self.ACLocation, })
+        # self.ACLocEntry.grid({"row": 0, "column": iF}); iF += 1
+        #
+        # self.buttonAID = tk.Button(self.bottomFrame, {"text": "Additional images' folder", "command": self.setAdditionalImageDir, })
+        # self.buttonAID.grid({"row": 0, "column": iF, }); iF += 1
+        #
+        # self.AdditionalImageDirEntry    = tk.Entry(self.bottomFrame, {"width": 40, "textvariable": self.AdditionalImageDir, })
+        # self.AdditionalImageDirEntry.grid({"row": 0, "column": iF}); iF += 1
+        #
+        # self.paramCheckButton   = tk.Checkbutton(self.bottomFrame, {"text": "Check Parameters", "variable": self.bCheckParams})
+        # self.paramCheckButton.grid({"row": 0, "column": iF}); iF += 1
+        #
+        # self.debugCheckButton   = tk.Checkbutton(self.bottomFrame, {"text": "Debug", "variable": self.bDebug})
+        # self.debugCheckButton.grid({"row": 0, "column": iF}); iF += 1
+        #
+        # self.cleanupCheckButton   = tk.Checkbutton(self.bottomFrame, {"text": "Cleanup", "variable": self.bCleanup})
+        # self.cleanupCheckButton.grid({"row": 0, "column": iF}); iF += 1
+        #
+        # self.bAddStrCheckButton = tk.Checkbutton(self.bottomFrame, {"text": "Always add strings", "variable": self.bAddStr})
+        # self.bAddStrCheckButton.grid({"row": 0, "column": iF}); iF += 1
+        #
+        # self.OverWriteCheckButton   = tk.Checkbutton(self.bottomFrame, {"text": "Overwrite", "variable": self.bOverWrite})
+        # self.OverWriteCheckButton.grid({"row": 0, "column": iF}); iF += 1
+        #
+        # self.BOUpdateCheckButton    = tk.Checkbutton(self.bottomFrame, {"text": "BO_update", "variable": self.doBOUpdate})
+        # self.OverWriteCheckButton.grid({"row": 0, "column": iF}); iF += 1
+        #
+        # self.startButton        = tk.Button(self.bottomFrame, {"text": "Start", "command": self.start})
+        # self.startButton.grid({"row": 0, "column": 7, "sticky": tk.E})
+        #
+        # # ----buttons---------------------------------------------------------------------------------------------------
+        #
+        # self.buttonFrame        = tk.Frame(self.top)
+        # self.buttonFrame.grid({"row": 0, "column": 1})
+        #
+        # _i = 0
+        #
+        # self.addAllButton       = tk.Button(self.buttonFrame, {"text": ">>", "command": self.addAllFiles})
+        # self.addAllButton.grid({"row":_i, "column": 0})
+        #
+        # _i += 1
+        #
+        # self.addRecursiveButton = tk.Button(self.buttonFrame, {"text": "Recursive >", "command": self.addMoreFilesRecursively})
+        # self.addRecursiveButton.grid({"row":_i, "column": 0, "sticky": tk.W + tk.E})
+        # CreateToolTip(self.addRecursiveButton, "Add macro, and all its called macro and subtypes recursively, if not added already")
+        #
+        # _i += 1
+        #
+        # self.addButton          = tk.Button(self.buttonFrame, {"text": ">", "command": self.addMoreFiles})
+        # self.addButton.grid({"row":_i, "column": 0, "sticky": tk.W + tk.E})
+        #
+        # _i += 1
+        #
+        # self.delButton          = tk.Button(self.buttonFrame, {"text": "X", "command": self.delFile})
+        # self.delButton.grid({"row":_i, "column": 0, "sticky": tk.W + tk.E})
+        #
+        # _i += 1
+        #
+        # self.resetButton         = tk.Button(self.buttonFrame, {"text": "Reset", "command": self.resetAll })
+        # self.resetButton.grid({"row": _i, "sticky": tk.W + tk.E})
+        #
+        # _i += 1
+        #
+        # self.CSVbutton          = tk.Button(self.buttonFrame, {"text": "CSV", "command": self.getFromCSV, })
+        # self.CSVbutton.grid({"row": _i, "sticky": tk.W + tk.E})
+        #
+        # _i += 1
+        #
+        # # self.GoogleSSBbutton     = tk.Button(self.buttonFrame, {"text": "Google Spreadsheet", "command": self.showGoogleSpreadsheetEntry, })
+        # # self.GoogleSSBbutton.grid({"row": _i, "sticky": tk.W + tk.E})
+        #
+        # _i += 1
+        #
+        # self.ParamWriteButton    = tk.Button(self.buttonFrame, {"text": "Write params", "command": self.paramWrite, })
+        # self.ParamWriteButton.grid({"row": _i, "sticky": tk.W + tk.E})
+        #
+        # #FIXME
+        # #
+        # #_i += 1
+        # #
+        # # self.reconnectButton      = tk.Button(self.buttonFrame, {"text": "Reconnect", "command": self.reconnect })
+        # # self.reconnectButton.grid({"row": _i, "sticky": tk.W + tk.E})
+        #
+        # # ----properties------------------------------------------------------------------------------------------------
+        #
+        # self.propertyFrame      = tk.Frame(self.top)
+        # self.propertyFrame.grid({"row": 0, "column": 3, "rowspan": 3, "sticky": tk.N})
+        #
+        # iNameW      = 10
+        # iCurRow     = 0
+        #
+        # tk.Label(self.propertyFrame, {"width": iNameW, "text": "Name"}).grid({"row": iCurRow, "column": 0})
+        # self.fileNameEntry      = tk.Entry(self.propertyFrame, {"width": 60, "textvariable": self.fileName})
+        # self.fileNameEntry.grid({"row": iCurRow, "column": 1})
+        #
+        # iCurRow += 1
+        #
+        # tk.Label(self.propertyFrame, {"width": iNameW, "text": "GUID"}).grid({"row": iCurRow, "column": 0})
+        # self.guidEntry          = tk.Entry(self.propertyFrame, {"state": tk.DISABLED, })
+        # self.guidEntry.grid({"row": iCurRow, "column": 1, "sticky": tk.W + tk.E, })
+        #
+        # iCurRow += 1
+        #
+        # tk.Label(self.propertyFrame, {"width": iNameW, "text": "Version"}).grid({"row": iCurRow, "column": 0})
+        # self.versionEntry       = tk.Entry(self.propertyFrame, {"width": 3, "state": tk.DISABLED})
+        # self.versionEntry.grid({"row": iCurRow, "column": 1, })
+        #
+        # iCurRow += 1
+        #
+        # tk.Label(self.propertyFrame, {"width": iNameW, "text": "prodatURL"}).grid({"row": iCurRow, "column": 0})
+        # self.proDatURLEntry     = tk.Entry(self.propertyFrame, {"textvariable": self.proDatURL})
+        # self.proDatURLEntry.grid({"row": iCurRow, "column": 1, "sticky": tk.W + tk.E, })
+        #
+        # iCurRow += 1
+        #
+        # tk.Label(self.propertyFrame, {"width": iNameW, "text": "Author"}).grid({"row": iCurRow, "column": 0})
+        # self.authorEntry = tk.Entry(self.propertyFrame, {})
+        # self.authorEntry.grid({"row": iCurRow, "column": 1, "sticky": tk.W + tk.E, })
+        #
+        # iCurRow += 1
+        #
+        # tk.Label(self.propertyFrame, {"width": iNameW, "text": "License"}).grid({"row": iCurRow, "column": 0})
+        # self.licenseFrame      = tk.Frame(self.propertyFrame)
+        # self.licenseFrame.grid({"row": iCurRow, "column": 1, })
+        #
+        # self.licenseEntry = tk.Entry(self.licenseFrame, {"width": 17, })
+        # self.licenseEntry.grid({"column": 0, "row": 0, })
+        #
+        # tk.Label(self.licenseFrame, {"width": 4, "text": "Ver."}).grid({"row": 0, "column": 1})
+        # self.licenseVersionEntry = tk.Entry(self.licenseFrame, {"width": 17, })
+        # self.licenseVersionEntry.grid({"column": 2, "row": 0, })
+        #
+        # iCurRow += 1
+        #
+        # tk.Label(self.propertyFrame, {"text": "Warnings:"}).grid({"row": iCurRow, "column": 0, "sticky": tk.N})
+        # self.warningFrame      = tk.Frame(self.propertyFrame)
+        # self.warningFrame.grid({"row": iCurRow, "column": 1, "sticky": tk.W})
+        #
+        # #FIXME to put in projectname field
+        #
+        # CreateToolTip(self.entryTextNameFrom, "FromSting: WARNING: this is Regex")
+        # CreateToolTip(self.entryTextNameTo, "If 'Always add strings' is set add to the end of every file if FromSting cannot be replaced, if not, only replace FromSting Regex pattern")
+        # CreateToolTip(self.AdditionalImageDirEntry, __tooltipIDPT6)
+        # CreateToolTip(self.AdditionalImageDirEntry, __tooltipIDPT6)
 
     def createDestItems(self, inList):
         firstRow = inList[0]
