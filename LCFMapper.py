@@ -1386,6 +1386,6 @@ if __name__ == "__main__":
     SourceXMLDirName = strHack(r"C:\Users\samu.karli\Desktop\Archicad Library 26.gsm\XML")
     SourceImageDirName = strHack(r"C:\Users\samu.karli\Desktop\Archicad Library 26.gsm\IMG")
 
-    scanDirs(SourceXMLDirName.get(), SourceXMLDirName.get(), SourceImageDirName.get())
+    scanDirs(SourceXMLDirName.get(), SourceXMLDirName.get(), SourceImageDirName.get()) 
     main2()
 
