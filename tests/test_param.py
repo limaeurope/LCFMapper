@@ -1,5 +1,5 @@
 import unittest
-from TemplateMaker import Param
+from LCFMapper import Param
 from lxml import etree
 import os
 import os.path

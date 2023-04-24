@@ -3,7 +3,7 @@
 
 import unittest
 import os
-from TemplateMaker import ParamSection
+from LCFMapper import ParamSection
 from lxml import etree
 import csv
 
