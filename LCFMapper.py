@@ -328,7 +328,6 @@ class DestXML (XMLFile, DestFile):
 
         self.sourceFile             = sourceFile
         self.guid                   = sourceFile.guid
-        # self.guid                   = str(uuid.uuid4()).upper()
         self.bPlaceable             = sourceFile.bPlaceable
         self.iVersion               = sourceFile.iVersion
         self.proDatURL              = ''
@@ -381,22 +380,28 @@ class ParamMapping:
         self._type = p_iType
         self._files = str.split(p_row[_A_].value, ";") if p_row[_A_].value else []
         self._paramName = p_row[_B_].value
+        self._paramDesc = p_row[_C_].value
         self._from = p_row[_D_].value
         self._to = p_row[_F_].value
 
 
 class ParamMappingContainer:
     def __init__(self, p_sXLSX):
-        wb = opx.load_workbook(p_sXLSX)
-        _sheet = wb ["Pens"]
         self._mappingList = []
-        for row in _sheet.iter_rows(min_row=2):
-            self._mappingList.append(ParamMapping(PAR_PEN, row))
+
+        wb = opx.load_workbook(p_sXLSX)
+        for _sheetName, _paramType in PARAM_TYPES.items():
+            try:
+                _sheet = wb [_sheetName]
+            except KeyError:
+                continue
+            for row in _sheet.iter_rows(min_row=2):
+                self._mappingList.append(ParamMapping(_paramType, row))
 
     def applyParams(self, p_parSect, p_fileName):
         for mapping in self._mappingList:
             if not mapping._files or p_fileName in mapping._files:
-                params = p_parSect.getParamsByTypeNameAndValue(mapping._type, mapping._paramName, mapping._from)
+                params = p_parSect.getParamsByTypeNameAndValue(mapping._type, mapping._paramName, mapping._paramDesc, mapping._from)
                 for par in params:
                     par.value = mapping._to
 
@@ -1616,7 +1621,7 @@ def processOneXML(inData):
     mdp = etree.parse(srcPath, etree.XMLParser(strip_cdata=False))
     mdp.getroot().attrib[dest.sourceFile.ID] = dest.guid
     # FIXME what if calledmacros are not overwritten?
-    if bOverWrite and dest.retainedCalledMacros:
+    if bOverWrite and dest.bRetainCalledMacros:
         cmRoot = mdp.find("./CalledMacros")
         for m in mdp.findall("./CalledMacros/Macro"):
             cmRoot.remove(m)
@@ -1657,7 +1662,7 @@ def processOneXML(inData):
 
             section.text = etree.CDATA(t)
     # ---------------------Prevpict-------------------------------------------------------
-    #FIXME
+    #TODO
     if dest.bPlaceable:
         section = mdp.find('Picture')
         if isinstance(section, etree._Element) and 'path' in section.attrib:
