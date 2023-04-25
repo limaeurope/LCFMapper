@@ -375,6 +375,7 @@ _Z_ = 25
 
 import openpyxl as opx
 
+
 class ParamMapping:
     def __init__(self, p_iType, p_row):
         self._type = p_iType
@@ -1589,6 +1590,15 @@ def main2():
     if bGDL.get():
         check_output(x2lCommand, shell=True)
 
+        _containerName = r"C:\Users\gyula.karli\Desktop\Uj mappa\LCF\testContainer.lcf"
+
+        containerCommand = '"%s" createcontainer "%s" "%s"' % (os.path.join(ACLocation.get(), 'LP_XMLConverter.exe'), _containerName, targGDLDir)
+        print("containerCommand Command being executed...")
+        print(containerCommand)
+
+        check_output(containerCommand, shell=True)
+
+
     # cleanup ops
     if not bCleanup.get():
         shutil.rmtree(tempPicDir)
@@ -1597,6 +1607,8 @@ def main2():
     else:
         print("tempdir: %s" % tempdir)
         print("tempPicDir: %s" % tempPicDir)
+
+
 
     print("*****FINISHED SUCCESFULLY******")
 
