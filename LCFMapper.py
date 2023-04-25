@@ -46,8 +46,6 @@ except ImportError:
 
 from GDLLib import *
 
-PERSONAL_ID = "ac4e5af2-7544-475c-907d-c7d91c810039"    #FIXME to be deleted after BO API v1 is removed
-
 ID = ''
 LISTBOX_SEPARATOR = '--------'
 AC_18   = 28
@@ -74,6 +72,7 @@ PAR_PEN         = 10
 PAR_SEPARATOR   = 11
 PAR_TITLE       = 12
 PAR_COMMENT     = 13
+
 
 PARFLG_CHILD    = 1
 PARFLG_BOLDNAME = 2
@@ -328,8 +327,8 @@ class DestXML (XMLFile, DestFile):
         self.warnings               = []
 
         self.sourceFile             = sourceFile
-        # self.guid                   = sourceFile.guid
-        self.guid                   = str(uuid.uuid4()).upper()
+        self.guid                   = sourceFile.guid
+        # self.guid                   = str(uuid.uuid4()).upper()
         self.bPlaceable             = sourceFile.bPlaceable
         self.iVersion               = sourceFile.iVersion
         self.proDatURL              = ''
@@ -337,8 +336,6 @@ class DestXML (XMLFile, DestFile):
         self.bRetainCalledMacros    = False
 
         self.parameters             = copy.deepcopy(sourceFile.parameters)
-
-        self.parameters['AC_TextSize_1'] = 99
 
         fullPath                    = os.path.join(TargetXMLDirName.get(), self.relPath)
         if os.path.isfile(fullPath):
@@ -366,6 +363,42 @@ class DestXML (XMLFile, DestFile):
         if self.sourceFile.guid.upper() not in id_dict:
             # if id_dict[self.sourceFile.guid.upper()] == "":
             id_dict[self.sourceFile.guid.upper()] = self.guid.upper()
+
+
+#----------------- mapping classes -------------------------------------------------------------------------------------
+
+_A_ =  0;   _B_ =  1;   _C_ =  2;   _D_ =  3;   _E_ =  4
+_F_ =  5;   _G_ =  6;   _H_ =  7;   _I_ =  8;   _J_ =  9
+_K_ = 10;   _L_ = 11;   _M_ = 12;   _N_ = 13;   _O_ = 14
+_P_ = 15;   _Q_ = 16;   _R_ = 17;   _S_ = 18;   _T_ = 19
+_U_ = 20;   _V_ = 21;   _W_ = 22;   _X_ = 23;   _Y_ = 24
+_Z_ = 25
+
+import openpyxl as opx
+
+class ParamMapping:
+    def __init__(self, p_iType, p_row):
+        self._type = p_iType
+        self._files = str.split(p_row[_A_].value, ";") if p_row[_A_].value else []
+        self._paramName = p_row[_B_].value
+        self._from = p_row[_D_].value
+        self._to = p_row[_F_].value
+
+
+class ParamMappingContainer:
+    def __init__(self, p_sXLSX):
+        wb = opx.load_workbook(p_sXLSX)
+        _sheet = wb ["Pens"]
+        self._mappingList = []
+        for row in _sheet.iter_rows(min_row=2):
+            self._mappingList.append(ParamMapping(PAR_PEN, row))
+
+    def applyParams(self, p_parSect, p_fileName):
+        for mapping in self._mappingList:
+            if not mapping._files or p_fileName in mapping._files:
+                params = p_parSect.getParamsByTypeNameAndValue(mapping._type, mapping._paramName, mapping._from)
+                for par in params:
+                    par.value = mapping._to
 
 
 #----------------- gui classes -----------------------------------------------------------------------------------------
@@ -1267,12 +1300,12 @@ class GUIApp(tk.Frame):
         self.versionEntry.insert(0, self.destItem.iVersion)
         self.versionEntry.config({"state": tk.DISABLED})
 
-        self.authorEntry.delete(0, tk.END)
-        self.authorEntry.insert(0, self.destItem.author)
-        self.licenseEntry.delete(0, tk.END)
-        self.licenseEntry.insert(0, self.destItem.license)
-        self.licenseVersionEntry.delete(0, tk.END)
-        self.licenseVersionEntry.insert(0, self.destItem.licneseVersion)
+        # self.authorEntry.delete(0, tk.END)
+        # self.authorEntry.insert(0, self.destItem.author)
+        # self.licenseEntry.delete(0, tk.END)
+        # self.licenseEntry.insert(0, self.destItem.license)
+        # self.licenseVersionEntry.delete(0, tk.END)
+        # self.licenseVersionEntry.insert(0, self.destItem.licneseVersion)
 
         for w in self.warnings:
             w.destroy()
@@ -1570,8 +1603,7 @@ def processOneXML(inData):
     pict_dict = inData["pict_dict"]
     bOverWrite = inData["bOverWrite"]
     StringTo = inData["StringTo"]
-
-    print(dest.parameters['AC_TextSize_1'])
+    mapping = ParamMappingContainer(r"C:\Users\gyula.karli\DEV\LCFMapper\testMap.xlsx")
 
     src = dest.sourceFile
     srcPath = src.fullPath
@@ -1625,6 +1657,7 @@ def processOneXML(inData):
 
             section.text = etree.CDATA(t)
     # ---------------------Prevpict-------------------------------------------------------
+    #FIXME
     if dest.bPlaceable:
         section = mdp.find('Picture')
         if isinstance(section, etree._Element) and 'path' in section.attrib:
@@ -1634,29 +1667,16 @@ def processOneXML(inData):
                           os.path.basename(pict_dict[p].sourceFile.relPath).upper() == path), None)
                 if n:
                     section.attrib['path'] = os.path.dirname(n) + "/" + os.path.basename(n)  # Not os.path.join!
-    # ---------------------AC18 and over: adding licensing statically---------------------
-    # if dest.iVersion >= AC_18:
-    #     for cr in mdp.getroot().findall("Copyright"):
-    #         mdp.getroot().remove(cr)
-    #
-    #     eCopyright = etree.Element("Copyright", SectVersion="1", SectionFlags="0", SubIdent="0")
-    #     eAuthor = etree.Element("Author")
-    #     eCopyright.append(eAuthor)
-    #     eAuthor.text = dest.author
-    #
-    #     eLicense = etree.Element("License")
-    #     eCopyright.append(eLicense)
-    #
-    #     eLType = etree.Element("Type")
-    #     eLicense.append(eLType)
-    #     eLType.text = dest.license
-    #
-    #     eLVersion = etree.Element("Version")
-    #     eLicense.append(eLVersion)
-    #
-    #     eLVersion.text = dest.licneseVersion
-    #
-    #     mdp.getroot().append(eCopyright)
+
+    parRoot = mdp.find("./ParamSection")
+    parPar = parRoot.getparent()
+    parPar.remove(parRoot)
+
+    mapping.applyParams(dest.parameters, dest.name)
+
+    destPar = dest.parameters.toEtree()
+    parPar.append(destPar)
+
     # ---------------------Ancestries--------------------
     # FIXME not clear, check, writes an extra empty mainunid field
     # FIXME ancestries to be used in param checking
